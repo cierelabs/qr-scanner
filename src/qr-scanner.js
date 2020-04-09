@@ -71,36 +71,21 @@ export default class QrScanner {
             return Promise.resolve();
         }
 
-        const uniqueFacingModes = {};
-        const facingModes = [];
-        [this._defaultFacingMode, 'environment', 'user', 'left', 'right'].forEach((facingMode) => {
-            if (!uniqueFacingModes[facingMode]) {
-                facingModes.push(facingMode);
-                uniqueFacingModes[facingMode] = true;
-            }
-        });
-
-        let p = Promise.resolve();
-
-        facingModes.forEach((facingMode) => {
-            p = p.then(() => {
-                return this._getCameraStream(facingMode, true).catch(() => {
-                    return;
-                }).then((stream) => {
-                    this.$video.srcObject = stream;
-                    this._setVideoMirror(facingMode);
-                }).catch(() => {
-                    return;
-                });
+        let facingMode = this._defaultFacingMode;
+        return this._getCameraStream(this._defaultFacingMode, false)
+            .catch(() => {
+                // we (probably) don't have an environment camera
+                facingMode = 'user';
+                return this._getCameraStream(); // throws if camera is not accessible (e.g. due to not https)
+            })
+            .then(stream => {
+                this.$video.srcObject = stream;
+                this._setVideoMirror(facingMode);
+            })
+            .catch(e => {
+                this._active = false;
+                throw e;
             });
-        });
-
-        p = p.catch(e => {
-            this._active = false;
-            throw e;
-        });
-
-        return p;
     }
 
     stop() {
