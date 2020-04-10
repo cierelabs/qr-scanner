@@ -9,7 +9,7 @@ export default class QrScanner {
             .catch(() => false);
     }
 
-    constructor(video, onDecode, canvasSize = QrScanner.DEFAULT_CANVAS_SIZE, defaultFacingMode = 'environment') {
+    constructor(video, onDecode, defaultFacingMode = 'environment', canvasSize = QrScanner.DEFAULT_CANVAS_SIZE) {
         this.$video = video;
         this.$canvas = document.createElement('canvas');
         this._onDecode = onDecode;
@@ -72,11 +72,12 @@ export default class QrScanner {
         }
 
         let facingMode = this._defaultFacingMode;
-        return this._getCameraStream(this._defaultFacingMode, false)
+        let alternateFacingMode = this._defaultFacingMode === 'user' ? 'environment' : 'user';
+        return this._getCameraStream(this._defaultFacingMode, true)
             .catch(() => {
                 // we (probably) don't have an environment camera
                 facingMode = 'user';
-                return this._getCameraStream(); // throws if camera is not accessible (e.g. due to not https)
+                return this._getCameraStream(alternateFacingMode, true); // throws if camera is not accessible (e.g. due to not https)
             })
             .then(stream => {
                 this.$video.srcObject = stream;
@@ -223,11 +224,15 @@ export default class QrScanner {
     }
 
     _getCameraStream(facingMode, exact = false) {
-        const constraintsToTry = [{
-            width: { min: 1024 }
-        }, {
-            width: { min: 768 }
-        }, {}];
+        const constraintsToTry = [
+            // {
+            //     width: { min: 1024 }
+            // },
+            // {
+            //     width: { min: 768 }
+            // },
+            {},
+        ];
 
         if (facingMode) {
             if (exact) {
@@ -235,6 +240,7 @@ export default class QrScanner {
             }
             constraintsToTry.forEach(constraint => constraint.facingMode = facingMode);
         }
+
         return this._getMatchingCameraStream(constraintsToTry);
     }
 
