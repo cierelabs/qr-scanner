@@ -75,9 +75,7 @@ export default class QrScanner {
         let alternateFacingMode = this._defaultFacingMode === 'user' ? 'environment' : 'user';
         return this._getCameraStream(this._defaultFacingMode, true)
             .catch(() => {
-                // we (probably) don't have an environment camera
-                facingMode = 'user';
-                return this._getCameraStream(alternateFacingMode, true); // throws if camera is not accessible (e.g. due to not https)
+                return this._getCameraStream(alternateFacingMode, false); // throws if camera is not accessible (e.g. due to not https)
             })
             .then(stream => {
                 this.$video.srcObject = stream;
@@ -225,12 +223,12 @@ export default class QrScanner {
 
     _getCameraStream(facingMode, exact = false) {
         const constraintsToTry = [
-            // {
-            //     width: { min: 1024 }
-            // },
-            // {
-            //     width: { min: 768 }
-            // },
+            {
+                width: { min: 1024 }
+            },
+            {
+                width: { min: 768 }
+            },
             {},
         ];
 
